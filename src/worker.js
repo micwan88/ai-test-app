@@ -14,11 +14,13 @@ export default {
     try {
       // In a deployed worker, you'd need to fetch this from a public URL or include it.
       // For local dev with `wrangler dev`, it correctly serves from ./public
-      const response = await fetch(new URL('/index.html', request.url).toString(), request);
-      if (!response.ok) {
-        return new Response('Error fetching HTML template: ' + response.statusText, { status: 500 });
+      // This fetch should resolve to the index.html in the `public` directory
+      // due to the `[site] bucket = "./public"` in wrangler.toml
+      const htmlResponse = await env.ASSETS.fetch(new URL('/index.html', request.url)); // Changed this line
+      if (!htmlResponse.ok) {
+        return new Response('Error fetching HTML template: ' + htmlResponse.statusText, { status: 500 });
       }
-      html = await response.text();
+      html = await htmlResponse.text();
     } catch (e) {
       return new Response('Error fetching HTML: ' + e.message, { status: 500 });
     }
@@ -38,10 +40,10 @@ export default {
         },
       });
 
-    const transformedHtml = rewriter.transform(new Response(html, {
+    const response = new Response(html, { // Create a new response with the original HTML
         headers: { 'Content-Type': 'text/html;charset=UTF-8' },
-    }));
+    });
 
-    return transformedHtml;
+    return rewriter.transform(response); // Transform this new response
   },
 };
