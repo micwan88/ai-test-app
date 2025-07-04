@@ -1,49 +1,76 @@
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const textParam = url.searchParams.get('text') || 'Default Text';
-    const codeParam = url.searchParams.get('code') || 'https://workers.cloudflare.com';
+    const pathname = url.pathname;
 
-    // Fetch the HTML template
-    // In a real worker, you would serve static assets from R2 or KV,
-    // or include them in the worker bundle if small enough.
-    // For this example, we'll assume index.html and style.css are accessible.
-    // When using `wrangler dev`, it serves from the `public` directory automatically.
-
-    let html;
-    try {
-      // In a deployed worker, you'd need to fetch this from a public URL or include it.
-      // For local dev with `wrangler dev`, it correctly serves from ./public
-      // This fetch should resolve to the index.html in the `public` directory
-      // due to the `[site] bucket = "./public"` in wrangler.toml
-      const htmlResponse = await env.ASSETS.fetch(new URL('/index.html', request.url)); // Changed this line
-      if (!htmlResponse.ok) {
-        return new Response('Error fetching HTML template: ' + htmlResponse.statusText, { status: 500 });
-      }
-      html = await htmlResponse.text();
-    } catch (e) {
-      return new Response('Error fetching HTML: ' + e.message, { status: 500 });
+    // Ensure the KV namespace is bound
+    if (!env.STATIC_ASSETS_KV) {
+      return new Response("KV Namespace 'STATIC_ASSETS_KV' is not bound. Please check your wrangler.toml and Cloudflare dashboard.", { status: 500 });
     }
 
-    // Use HTMLRewriter to modify the HTML
-    const rewriter = new HTMLRewriter()
-      .on('#text-container', {
-        element(element) {
-          element.setInnerContent(textParam);
-        },
-      })
-      .on('#qr-image', {
-        element(element) {
-          const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(codeParam)}`;
-          element.setAttribute('src', qrUrl);
-          element.setAttribute('alt', `QR Code for ${codeParam}`);
-        },
+    // Serve static assets from KV
+    if (pathname === '/Untitled.png') {
+      try {
+        const image = await env.STATIC_ASSETS_KV.get("Untitled.png", { type: "arrayBuffer" });
+        if (image === null) {
+          return new Response("Untitled.png not found in KV store.", { status: 404 });
+        }
+        return new Response(image, { headers: { 'Content-Type': 'image/png' } });
+      } catch (e) {
+        console.error("KV get error for Untitled.png:", e);
+        return new Response('Error fetching image from KV: ' + e.message, { status: 500 });
+      }
+    } else if (pathname === '/style.css') {
+      try {
+        const css = await env.STATIC_ASSETS_KV.get("style.css", { type: "text" });
+        if (css === null) {
+          return new Response("style.css not found in KV store.", { status: 404 });
+        }
+        return new Response(css, { headers: { 'Content-Type': 'text/css;charset=UTF-8' } });
+      } catch (e) {
+        console.error("KV get error for style.css:", e);
+        return new Response('Error fetching CSS from KV: ' + e.message, { status: 500 });
+      }
+    }
+
+    // For root path or any other path, serve dynamic HTML
+    if (pathname === '/' || pathname.startsWith('/?')) {
+      const textParam = url.searchParams.get('text') || 'Default Text';
+      const codeParam = url.searchParams.get('code') || 'https://workers.cloudflare.com';
+
+      let html;
+      try {
+        html = await env.STATIC_ASSETS_KV.get("index.html");
+        if (html === null) {
+          return new Response("index.html not found in KV store.", { status: 404 });
+        }
+      } catch (e) {
+        console.error("KV get error for index.html:", e);
+        return new Response('Error fetching HTML from KV: ' + e.message, { status: 500 });
+      }
+
+      const rewriter = new HTMLRewriter()
+        .on('#text-container', {
+          element(element) {
+            element.setInnerContent(textParam);
+          },
+        })
+        .on('#qr-image', {
+          element(element) {
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(codeParam)}`;
+            element.setAttribute('src', qrUrl);
+            element.setAttribute('alt', `QR Code for ${codeParam}`);
+          },
+        });
+
+      const response = new Response(html, {
+          headers: { 'Content-Type': 'text/html;charset=UTF-8' },
       });
 
-    const response = new Response(html, { // Create a new response with the original HTML
-        headers: { 'Content-Type': 'text/html;charset=UTF-8' },
-    });
+      return rewriter.transform(response);
+    }
 
-    return rewriter.transform(response); // Transform this new response
+    // If no route matches, return 404
+    return new Response("Not Found", { status: 404 });
   },
 };
