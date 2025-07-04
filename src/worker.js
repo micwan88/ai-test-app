@@ -69,7 +69,13 @@ export default {
         });
 
       const response = new Response(html, {
-          headers: { 'Content-Type': 'text/html;charset=UTF-8' },
+          headers: {
+            'Content-Type': 'text/html;charset=UTF-8',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'X-Robots-Tag': 'noindex, nofollow, noarchive'
+          },
       });
 
       return rewriter.transform(response);
