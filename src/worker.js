@@ -61,6 +61,11 @@ export default {
             element.setAttribute('src', qrUrl);
             element.setAttribute('alt', `QR Code for ${codeParam}`);
           },
+        })
+        .on('#code-value', {
+          element(element) {
+            element.setInnerContent(codeParam);
+          },
         });
 
       const response = new Response(html, {
