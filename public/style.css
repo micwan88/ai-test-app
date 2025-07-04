@@ -4,7 +4,7 @@ body {
     font-family: Arial, sans-serif;
     background-image: url('/Untitled.png'); /* User will place this at the root */
     background-size: cover;
-    background-position: center;
+    background-position: top;
     background-repeat: no-repeat;
     width: 100vw;
     height: 100vh;
@@ -16,15 +16,15 @@ body {
 
 #text-container {
     position: absolute;
-    top: 20px; /* Adjust as needed */
-    left: 50%;
+    top: 15%; /* Adjust as needed */
+    left: 10%;
     transform: translateX(-50%);
-    padding: 10px 20px;
-    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+    /*padding: 10px 20px;*/
     border-radius: 5px;
+    font-weight: bold;
     font-size: 18px; /* Adjust as needed */
-    color: #333;
-    text-align: center;
+    color: #ffffff;
+    text-align: left;
     max-width: 90%;
     word-wrap: break-word;
 }
@@ -42,6 +42,6 @@ body {
 
 #qr-container img {
     display: block;
-    width: 200px; /* Adjust as needed */
-    height: 200px; /* Adjust as needed */
+    width: 150px; /* Adjust as needed */
+    height: 150px; /* Adjust as needed */
 }
