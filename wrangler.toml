@@ -10,5 +10,5 @@ compatibility_date = "2023-10-30" # Use a recent compatibility date
 # but it's good for `wrangler dev` (non-local) and deployments.
 [[kv_namespaces]]
 binding = "STATIC_ASSETS_KV"
-id = "YOUR_KV_NAMESPACE_ID_HERE"
+id = "4043ab35ce17463092680356c7ef091f"
 # preview_id = "YOUR_KV_NAMESPACE_ID_FOR_PREVIEW_HERE" # Often the same as id
