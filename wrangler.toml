@@ -1,4 +1,5 @@
-name = "qr-code-app" # You can change this to your preferred app name
+# wrangler.toml
+name = 'octopus-energy-qrcode'
 main = "src/worker.js"
 compatibility_date = "2023-10-30" # Use a recent compatibility date
 
